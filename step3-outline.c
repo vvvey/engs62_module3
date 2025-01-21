@@ -19,6 +19,8 @@
 #include "gic.h"		/* interrupt controller interface */
 #include "xgpio.h"		/* axi gpio interface */
 #include "io.h"
+#include "xttcps.h"
+#include "led.h"
 
 /* hidden private state */
 
@@ -97,6 +99,9 @@ void sw_handler(void *devicep) {
 }
 
 
+static XTtcPs *timer;
+static XTtcPs_Config *dev_config;
+
 int main() {
 
   init_platform();				
@@ -104,6 +109,16 @@ int main() {
   led_init();
   io_sw_init(sw_handler);
   io_btn_init(btn_handler);
+
+  dev_config = XTtcPs_LookupConfig(XPAR_XTTCPS_0_DEVICE_ID);
+  XTtcPs_CfgInitialize(&timer, dev_config, 1); // not sure if this's right
+
+  //XPAR_XTCPS_0_DEVICE_ID
+  //XPAR_XTTCPS_0_INTR
+  //XTTCPS_IXR_INTERVAL_MASK
+  //XTTCPS_OPTION_INTERVAL_MODE
+  //XTtcPs_CfgInitialize()
+
 
   setvbuf(stdin,NULL,_IONBF,0);
   printf("[hello]\n"); /* so we are know its alive */
