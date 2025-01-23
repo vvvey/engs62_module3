@@ -25,88 +25,16 @@
 
 /* hidden private state */
 
-static u32 swState = 0b0;
-
-/*
- * controll is passed to this function when a button is pushed
- *
- * devicep -- ptr to the device that caused the interrupt
- */
-void btn_handler(void *devicep) {
-	/* coerce the generic pointer into a gpio */
-	XGpio *dev = (XGpio*)devicep;
-
-	XGpio_InterruptClear(dev, 1);
-	u32 btn_output = XGpio_DiscreteRead(dev, 1);
-
-	u32 btn0_mask = 0b1;
-	u32 btn1_mask = 0b10;
-	u32 btn2_mask = 0b100;
-	u32 btn3_mask = 0b1000;
-
-	if ((btn_output & btn0_mask) == btn0_mask) {
-		led_toggle(0);
-	}
-
-	if ((btn_output & btn1_mask) == btn1_mask) {
-			led_toggle(1);
-		}
-
-	if ((btn_output & btn2_mask) == btn2_mask) {
-			led_toggle(2);
-		}
-
-	if ((btn_output & btn3_mask) == btn3_mask) {
-			led_toggle(3);
-		}
 
 
-	fflush(stdout);
-	XGpio_InterruptEnable(dev, 1);
+void handler(u32 led_num) {
+	led_toggle(led_num);
 }
 
-void sw_handler(void *devicep) {
 
-
-	XGpio *dev = (XGpio*)devicep;
-
-	XGpio_InterruptClear(dev, 1);
-	u32 sw_output = XGpio_DiscreteRead(dev, 1);
-
-	u32 sw0_mask = 0b1;
-	u32 sw1_mask = 0b10;
-	u32 sw2_mask = 0b100;
-	u32 sw3_mask = 0b1000;
-
-	if ((sw_output & sw0_mask) != (swState & sw0_mask)) {
-		led_toggle(0);
-	}
-
-	if ((sw_output & sw1_mask) != (swState & sw1_mask)) {
-		led_toggle(1);
-	}
-
-	if ((sw_output & sw2_mask) != (swState & sw2_mask)) {
-			led_toggle(2);
-		}
-
-	if ((sw_output & sw3_mask) != (swState & sw3_mask)) {
-			led_toggle(3);
-		}
-
-
-	swState = XGpio_DiscreteRead(dev, 1);
-	XGpio_InterruptEnable(dev, 1);
-}
-
-void timer_handler(void *devicep) {
-	XTtcPs *timerIns = (XTtcPs *)devicep;
-	XTtcPs_ClearInterruptStatus(timerIns, 1);
-
+void timer_handler() {
 	led_toggle(4);
-	XTtcPs_EnableInterrupts(timerIns, 1);
 }
-
 
 
 int main() {
@@ -115,8 +43,8 @@ int main() {
   gic_init();
   led_init();
 
-  io_sw_init(sw_handler);
-  io_btn_init(btn_handler);
+  io_sw_init(handler);
+  io_btn_init(handler);
   ttc_init(1, timer_handler);
 
   ttc_start();
