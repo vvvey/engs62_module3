@@ -98,8 +98,13 @@ void sw_handler(void *devicep) {
 	XGpio_InterruptEnable(dev, 1);
 }
 
+void timer_handler(void *devicep) {
+	XTtcPs *timerIns = (XTtcPs *)devicep;
 
-static XTtcPs *timer;
+
+}
+
+static XTtcPs timer;
 static XTtcPs_Config *dev_config;
 
 int main() {
@@ -111,7 +116,17 @@ int main() {
   io_btn_init(btn_handler);
 
   dev_config = XTtcPs_LookupConfig(XPAR_XTTCPS_0_DEVICE_ID);
-  XTtcPs_CfgInitialize(&timer, dev_config, 1); // not sure if this's right
+  XTtcPs_CfgInitialize(&timer, dev_config, dev_config->BaseAddress); // not sure if this's right
+  int status;
+  u16 interval;
+  u8 prescaler;
+  XTtcPs_CalcIntervalFromFreq(&timer, 1, &interval, &prescaler);
+
+  XTtcPs_SetInterval(&timer, interval);
+  XTtcPs_SetPrescaler(&timer, prescaler);
+  XTtcPs_SetOptions(&timer, XTTCPS_OPTION_INTERVAL_MODE);
+
+  XTtcPs_EnableInterrupts(&timer, XTTCPS_IXR_INTERVAL_MASK);
 
   //XPAR_XTCPS_0_DEVICE_ID
   //XPAR_XTTCPS_0_INTR
