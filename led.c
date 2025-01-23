@@ -164,6 +164,8 @@ bool led_get(u32 led) {
 
 }
 
+u32 state = 0;
+
 /*
  * Toggle <led>
  *
@@ -176,5 +178,11 @@ void led_toggle(u32 led) {
 		led_set(led, LED_ON);
 	} else {
 		led_set(led, LED_OFF);
+	}
+
+	if (led == 4) {
+		state = !state;
+		XGpioPs_WritePin(&gpio, LED4, state);
+
 	}
 }
