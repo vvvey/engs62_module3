@@ -21,6 +21,7 @@
 #include "io.h"
 #include "xttcps.h"
 #include "led.h"
+#include "ttc.h"
 
 /* hidden private state */
 
@@ -104,74 +105,21 @@ void timer_handler(void *devicep) {
 
 	led_toggle(4);
 	XTtcPs_EnableInterrupts(timerIns, 1);
-
-
 }
 
-static XTtcPs timer;
-static XTtcPs_Config *dev_config;
+
 
 int main() {
 
   init_platform();				
   gic_init();
   led_init();
+
   io_sw_init(sw_handler);
   io_btn_init(btn_handler);
+  ttc_init(1, timer_handler);
 
-//  dev_config = XTtcPs_LookupConfig(XPAR_XTTCPS_0_DEVICE_ID);
-//  XTtcPs_CfgInitialize(&timer, dev_config, dev_config->BaseAddress); // not sure if this's right
-//
-//  int status;
-//  u16 interval;
-//  u8 prescaler;
-//
-//  XTtcPs_CalcIntervalFromFreq(&timer, 1, &interval, &prescaler);
-//
-//  XTtcPs_SetInterval(&timer, interval);
-//  XTtcPs_SetPrescaler(&timer, prescaler);
-//  XTtcPs_SetOptions(&timer, XTTCPS_OPTION_INTERVAL_MODE);
-//
-//  XTtcPs_EnableInterrupts(&timer, XTTCPS_IXR_INTERVAL_MASK);
-//  gic_connect(XPAR_XTTCPS_0_DEVICE_ID, timer_handler, &timer);
-//
-//  XTtcPs_Start(&timer);
-//
-//  init_platform();
-//
-//  XTtcPs_Config *dev_config;
-  XTtcPs timer;
-  u16 interval;
-  u8 prescaler;
-
-  dev_config = XTtcPs_LookupConfig(XPAR_XTTCPS_0_DEVICE_ID);
-  if (dev_config == NULL) {
-      xil_printf("Timer configuration not found\n");
-      return XST_FAILURE;
-  }
-
-  if (XTtcPs_CfgInitialize(&timer, dev_config, dev_config->BaseAddress) != XST_SUCCESS) {
-      xil_printf("Timer initialization failed\n");
-      return XST_FAILURE;
-  }
-
-  XTtcPs_CalcIntervalFromFreq(&timer, 1, &interval, &prescaler);
-  xil_printf("Interval: %u, Prescaler: %u\n", interval, prescaler);
-
-  XTtcPs_SetInterval(&timer, interval);
-  XTtcPs_SetPrescaler(&timer, prescaler);
-  XTtcPs_SetOptions(&timer, XTTCPS_OPTION_INTERVAL_MODE);
-
-  XTtcPs_EnableInterrupts(&timer, XTTCPS_IXR_INTERVAL_MASK);
-  gic_connect(XPAR_XTTCPS_0_INTR, timer_handler, &timer);
-
-  XTtcPs_Start(&timer);
-
-  //XPAR_XTCPS_0_DEVICE_ID
-  //XPAR_XTTCPS_0_INTR
-  //XTTCPS_IXR_INTERVAL_MASK
-  //XTTCPS_OPTION_INTERVAL_MODE
-  //XTtcPs_CfgInitialize()
+  ttc_start();
 
 
   setvbuf(stdin,NULL,_IONBF,0);
@@ -240,8 +188,12 @@ int main() {
 
   printf("\n[done]\n");
 
+  ttc_stop();
+
   io_sw_close();
   io_btn_close();
+  ttc_close();
+
   gic_close();
   /* cleanup the hardware platform */
   cleanup_platform();
