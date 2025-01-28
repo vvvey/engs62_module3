@@ -23,6 +23,9 @@
 #include "led.h"
 #include "ttc.h"
 
+#include "xtmrctr.h"
+#include "xparameters.h"
+
 /* hidden private state */
 
 
@@ -37,7 +40,28 @@ void timer_handler() {
 }
 
 
+#define TIMER_DEVICE_ID XPAR_TMRCTR_0_DEVICE_ID
+#define TIMER_COUNTER_0 0
+#define TIMER_CLOCK_FREQ 111111111
+#define PWM_PERIOD 20000
+#define PWM_DUTY_CYCLE_HIGH 1500
+
+int InitPwmTimer2(XTmrCtr *TimerInstancePtr) {
+    int Status;
+
+    Status = XTmrCtr_Initialize(TimerInstancePtr, TIMER_DEVICE_ID);
+
+    u32 PeriodResetValue = (TIMER_CLOCK_FREQ / 1000000) * PWM_PERIOD;
+    u32 DutyCycleResetValue = (TIMER_CLOCK_FREQ / 1000000) * PWM_DUTY_CYCLE_HIGH;
+
+    XTmrCtr_SetResetValue(TimerInstancePtr, TIMER_COUNTER_0, PeriodResetValue);
+    XTmrCtr_SetResetValue(TimerInstancePtr, TIMER_COUNTER_0 + 1, DutyCycleResetValue);
+
+    XTmrCtr_SetOptions(TimerInstancePtr, TIMER_COUNTER_0, XTC_PWM_ENABLE_OPTION);
+}
+
 int main() {
+	XTmrCtr TimerInstance2;
 
   init_platform();				
   gic_init();
@@ -48,6 +72,10 @@ int main() {
   ttc_init(1, timer_handler);
 
   ttc_start();
+
+  int Status;
+  Status = InitPwmTimer2(&TimerInstance2);
+  XTmrCtr_Start(&TimerInstance2, TIMER_COUNTER_0);
 
 
   setvbuf(stdin,NULL,_IONBF,0);
