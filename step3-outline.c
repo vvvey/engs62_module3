@@ -53,7 +53,10 @@ int main() {
   ttc_start();
 
   servo_init();
-  servo_set(50);
+
+  double dutycycle = 50;
+  servo_set(dutycycle);
+
 
   setvbuf(stdin,NULL,_IONBF,0);
   printf("[hello]\n"); /* so we are know its alive */
@@ -80,28 +83,21 @@ int main() {
 
   	   if (strcmp(input, "q") == 0) {
   		   break;
+  	   } else if (strcmp(input, "s") == 0) {
+  		   dutycycle -= 0.25;
+  		   servo_set(dutycycle);
+  		   printf("%f", dutycycle);
+  	   } else if (strcmp(input, "a") == 0) {
+  		   dutycycle += 0.25;
+  		   servo_set(dutycycle);
+  		   printf("%f", dutycycle);
   	   }
 
      	   if (index == 1) {
-
      		   char *ep;
      		   long value = strtol(input, &ep,10);
      		   if (*ep == '\0' && value >=0 && value <= 3) {
-
-     			   switch (value) {
-     			   case 0:
-     				   led_toggle(0);
-     				   break;
-     			   case 1:
-     				   led_toggle(1);
-     				   break;
-     			   case 2:
-     				   led_toggle(2);
-     				   break;
-     			   case 3:
-     				   led_toggle(3);
-     				   break;
-     			   }
+     			   led_toggle(value);
 
      			   if (led_get(value) == true) {
      				   printf("[%ld on]\n", value);
