@@ -30,6 +30,9 @@ void servo_init(void) {
  * Set the dutycycle of the servo
  */
 void servo_set(double dutycycle) {
+	if (dutycycle > 11.75 || dutycycle < 2.5) {
+		return;
+	}
 
 	  u32 pwm_period = SYSTEM_CLK / PWM_FREQ;
 	  u32 pwm_high = (dutycycle * pwm_period)/100;

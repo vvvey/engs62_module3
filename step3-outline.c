@@ -54,7 +54,7 @@ int main() {
 
   servo_init();
 
-  double dutycycle = 50;
+  double dutycycle = 7.5;
   servo_set(dutycycle);
 
 
@@ -86,11 +86,19 @@ int main() {
   	   } else if (strcmp(input, "s") == 0) {
   		   dutycycle -= 0.25;
   		   servo_set(dutycycle);
-  		   printf("%f", dutycycle);
+  		   printf("[%f]", dutycycle);
   	   } else if (strcmp(input, "a") == 0) {
   		   dutycycle += 0.25;
   		   servo_set(dutycycle);
-  		   printf("%f", dutycycle);
+  		   printf("[%f]", dutycycle);
+  	   } else if (strcmp(input, "low") == 0) {
+  		   dutycycle = 2.5;
+  		   servo_set(dutycycle);
+  		   printf("[%f (low)]", dutycycle);
+  	   } else if (strcmp(input, "high") == 0) {
+  		   dutycycle = 11.75;
+  		   servo_set(dutycycle);
+  		   printf("[%f (high)]", dutycycle);
   	   }
 
      	   if (index == 1) {
