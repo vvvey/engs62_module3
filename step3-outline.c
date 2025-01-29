@@ -41,27 +41,17 @@ void timer_handler() {
 
 
 #define TIMER_DEVICE_ID XPAR_TMRCTR_0_DEVICE_ID
-#define TIMER_COUNTER_0 0
-#define TIMER_CLOCK_FREQ 111111111
-#define PWM_PERIOD 20000
-#define PWM_DUTY_CYCLE_HIGH 1500
+#define SYSTEM_CLK XPAR_TMRCTR_0_CLOCK_FREQ_HZ // 50MHz
+#define PWM_FREQ 50 // 50Hz --> 20 ms
 
-int InitPwmTimer2(XTmrCtr *TimerInstancePtr) {
-    int Status;
+void InitPwmTimer2(XTmrCtr *TimerInstancePtr) {
 
-    Status = XTmrCtr_Initialize(TimerInstancePtr, TIMER_DEVICE_ID);
-
-    u32 PeriodResetValue = (TIMER_CLOCK_FREQ / 1000000) * PWM_PERIOD;
-    u32 DutyCycleResetValue = (TIMER_CLOCK_FREQ / 1000000) * PWM_DUTY_CYCLE_HIGH;
-
-    XTmrCtr_SetResetValue(TimerInstancePtr, TIMER_COUNTER_0, PeriodResetValue);
-    XTmrCtr_SetResetValue(TimerInstancePtr, TIMER_COUNTER_0 + 1, DutyCycleResetValue);
-
-    XTmrCtr_SetOptions(TimerInstancePtr, TIMER_COUNTER_0, XTC_PWM_ENABLE_OPTION);
+//    XTmrCtr_Start(TimerInstancePtr, 1);
 }
 
+
 int main() {
-	XTmrCtr TimerInstance2;
+	XTmrCtr TimerInstancePtr;
 
   init_platform();				
   gic_init();
@@ -73,73 +63,98 @@ int main() {
 
   ttc_start();
 
-  int Status;
-  Status = InitPwmTimer2(&TimerInstance2);
-  XTmrCtr_Start(&TimerInstance2, TIMER_COUNTER_0);
+  // Init
+  XTmrCtr_Initialize(&TimerInstancePtr, TIMER_DEVICE_ID);
+
+  XTmrCtr_Stop(&TimerInstancePtr, 0);
+  XTmrCtr_Stop(&TimerInstancePtr, 1);
+
+  // Clear values
+  XTmrCtr_SetResetValue(&TimerInstancePtr, 0, 0);
+  XTmrCtr_SetResetValue(&TimerInstancePtr, 1, 0);
+
+  u32 duty_cycle = 15; // 15 % duty cycle
+  u32 pwm_period = SYSTEM_CLK / PWM_FREQ;
+  u32 pwm_high = (duty_cycle * pwm_period) / 100;
+
+//  XTmrCtr_Stop(&TimerInstancePtr, 0);
+  XTmrCtr_SetOptions(&TimerInstancePtr, 0, XTC_PWM_ENABLE_OPTION | XTC_DOWN_COUNT_OPTION | XTC_EXT_COMPARE_OPTION);
+  XTmrCtr_SetOptions(&TimerInstancePtr, 1, XTC_PWM_ENABLE_OPTION | XTC_DOWN_COUNT_OPTION | XTC_EXT_COMPARE_OPTION);
+
+  XTmrCtr_SetResetValue(&TimerInstancePtr, 0, pwm_period);
+  XTmrCtr_SetResetValue(&TimerInstancePtr, 1, pwm_high);
+
+  XTmrCtr_Start(&TimerInstancePtr, 0);
+  XTmrCtr_Start(&TimerInstancePtr, 1);
+
+  printf("period is %d", pwm_period);
+
 
 
   setvbuf(stdin,NULL,_IONBF,0);
   printf("[hello]\n"); /* so we are know its alive */
   while (1) {
-  	   int ch;
-
-  	   int index = 0;
-  	   char input[100];
-
-  	   printf(">");
-  	   fflush(stdout);
-
-  	   while ((ch = getchar()) != '\r' && ch != EOF ) {
-  		   input[index] = ch;
-  		   printf("%c", ch);
-  		   fflush(stdout);
-
-  		   index++;
-  	   }
-  	   input[index] = '\0';
-  	   printf("\n");
-  	   fflush(stdout);
-
-  	   if (strcmp(input, "q") == 0) {
-  		   break;
-  	   }
-
-     	   if (index == 1) {
-
-     		   char *ep;
-     		   long value = strtol(input, &ep,10);
-     		   if (*ep == '\0' && value >=0 && value <= 3) {
-
-     			   switch (value) {
-     			   case 0:
-     				   led_toggle(0);
-     				   break;
-     			   case 1:
-     				   led_toggle(1);
-     				   break;
-     			   case 2:
-     				   led_toggle(2);
-     				   break;
-     			   case 3:
-     				   led_toggle(3);
-     				   break;
-     			   }
-
-     			   if (led_get(value) == true) {
-     				   printf("[%ld on]\n", value);
-     			   } else {
-     				   printf("[%ld off]\n", value);
-     			   }
-     			 fflush(stdout);
-
-     		   }  else {
-     			   printf("\n");
-     		   }
-
-     	   } else {
-     		   printf("\n");
-     	   }
-     	   fflush(stdout);
+//	  printf("timer0: %lu, timer1: %lu \r\n", XTmrCtr_GetValue(&TimerInstancePtr, 0), XTmrCtr_GetValue(&TimerInstancePtr, 1));
+//	  sleep(0.005);
+//  	   int ch;
+//
+//  	   int index = 0;
+//  	   char input[100];
+//
+//  	   printf(">");
+//  	   fflush(stdout);
+//
+//  	   while ((ch = getchar()) != '\r' && ch != EOF ) {
+//  		   input[index] = ch;
+//  		   printf("%c", ch);
+//  		   fflush(stdout);
+//
+//  		   index++;
+//  	   }
+//  	   input[index] = '\0';
+//  	   printf("\n");
+//  	   fflush(stdout);
+//
+//  	   if (strcmp(input, "q") == 0) {
+//  		   break;
+//  	   }
+//
+//     	   if (index == 1) {
+//
+//     		   char *ep;
+//     		   long value = strtol(input, &ep,10);
+//     		   if (*ep == '\0' && value >=0 && value <= 3) {
+//
+//     			   switch (value) {
+//     			   case 0:
+//     				   led_toggle(0);
+//     				   break;
+//     			   case 1:
+//     				   led_toggle(1);
+//     				   break;
+//     			   case 2:
+//     				   led_toggle(2);
+//     				   break;
+//     			   case 3:
+//     				   led_toggle(3);
+//     				   break;
+//     			   }
+//
+//     			   if (led_get(value) == true) {
+//     				   printf("[%ld on]\n", value);
+//     			   } else {
+//     				   printf("[%ld off]\n", value);
+//     			   }
+//     			 fflush(stdout);
+//
+//     		   }  else {
+//     			   printf("\n");
+//     		   }
+//
+//     	   } else {
+//     		   printf("\n");
+//     	   }
+//     	   fflush(stdout);
      }
 
   printf("\n[done]\n");
